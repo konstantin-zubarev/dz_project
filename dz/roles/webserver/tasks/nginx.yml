@@ -1,0 +1,24 @@
+---
+# tasks file for roles/webserver
+
+- name: Add Nginx repository
+  copy:
+    src: CentOS-Nginx.repo
+    dest: /etc/yum.repos.d/
+
+- name: Install Nginx
+  yum:
+    name: nginx
+    state: present
+  notify:
+    - certificate
+    - start nginx
+
+- name: Create config file
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: wordpress.conf, dest: /etc/nginx/conf.d/wordpress.conf }
+    - { src: nginx.conf, dest: /etc/nginx/nginx.conf }
+  notify: restart nginx

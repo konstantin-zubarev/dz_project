@@ -1,0 +1,138 @@
+# -*- mode: ruby -*-
+# vim: set ft=ruby :
+
+home = ENV['HOME']
+
+MACHINES = {
+  :'inetRouter' => {
+        :box_name => "centos/7",
+        :net => [
+                  {ip: '192.168.5.2', adapter: 2, netmask: "255.255.255.0"},
+                  {ip: '192.168.11.1', adapter: 3, netmask: "255.255.255.0", virtualbox__intnet: "lan"},
+                ]
+  },
+  :'web' => {
+        :box_name => "centos/7",
+        :net => [
+                  {ip: '192.168.11.10', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "lan"},
+                ]
+  },
+  :'mariadb' => {
+        :box_name => "centos/7",
+        :net => [
+                 {ip: '192.168.11.20', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "lan"},
+                ]
+  },
+  :'backup' => {
+        :box_name => "centos/7",
+        :net => [
+                  {ip: '192.168.11.30', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "lan"},
+               ],
+        :hdd_path => home + '/VirtualBox VMs/disk/storage1.vdi',
+        :hdd_size => '5120'
+  },
+  :'log' => {
+        :box_name => "centos/7",
+        :net => [
+                 {ip: '192.168.11.40', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "lan"},
+                ]
+  },
+  :'zabbix' => {
+        :box_name => "centos/7",
+        :net => [
+                 {ip: '192.168.11.50', adapter: 2, netmask: "255.255.255.0", virtualbox__intnet: "lan"},
+                 {ip: '192.168.5.3', adapter: 3, netmask: "255.255.255.0"},
+                ]
+  }
+}
+
+Vagrant.configure("2") do |config|
+  MACHINES.each do |boxname, boxconfig|
+    config.vm.synced_folder ".", "/vagrant", disabled: true
+    config.vm.define boxname do |box|
+      box.vm.box = boxconfig[:box_name]
+      box.vm.host_name = boxname.to_s
+      boxconfig[:net].each do |ipconf|
+        box.vm.network "private_network", ipconf
+      end
+      box.vm.provider :virtualbox do |vb|
+        vb.name = boxname.to_s
+#        vb.customize ["modifyvm", :id, "--memory", "1024"]
+        # Подключаем дополнительные диски
+#        vb.customize ['createhd', '--filename', second_disk, '--format', 'VDI', '--size', 5 * 1024]
+#        vb.customize ['storageattach', :id, '--storagectl', 'IDE', '--port', 0, '--device', 1, '--type', 'hdd', '--medium', second_disk]
+        if (!boxconfig[:hdd_path].nil?)
+          unless File.exist?(boxconfig[:hdd_path])
+            vb.customize ['createhd', '--filename', boxconfig[:hdd_path], '--variant', 'Fixed', '--size', boxconfig[:hdd_size]]
+            needsController =  true
+          end
+          if needsController == true
+            vb.customize ["storagectl", :id, "--name", "SATA", "--add", "sata" ]
+            vb.customize ['storageattach', :id,  '--storagectl', 'SATA', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', boxconfig[:hdd_path]]
+          end
+        end
+      end
+      
+      box.vm.provision :shell do |s|
+        s.inline = 'mkdir -p ~root/.ssh; cp ~vagrant/.ssh/auth* ~root/.ssh'
+        s.inline = 'sed -i "65s/PasswordAuthentication no/PasswordAuthentication yes/g" /etc/ssh/sshd_config; systemctl restart sshd'
+      end
+      
+      case boxname.to_s
+      when "web"
+        box.vm.provision "shell", inline: <<-SHELL
+          echo "DEFROUTE=no" >> /etc/sysconfig/network-scripts/ifcfg-eth0
+          echo "GATEWAY=192.168.11.1" >> /etc/sysconfig/network-scripts/ifcfg-eth1
+          systemctl restart network
+          ip route add default via 192.168.11.1
+        SHELL
+
+      when "mariadb"
+        box.vm.provider "virtualbox" do |vb|
+          vb.memory = "1024"
+          vb.cpus = "2"
+        end
+        box.vm.provision "shell", inline: <<-SHELL
+          echo "DEFROUTE=no" >> /etc/sysconfig/network-scripts/ifcfg-eth0
+          echo "GATEWAY=192.168.11.1" >> /etc/sysconfig/network-scripts/ifcfg-eth1
+          systemctl restart network
+          ip route add default via 192.168.11.1
+        SHELL
+      
+      when "backup"
+        box.vm.provision "shell", inline: <<-SHELL
+          echo "DEFROUTE=no" >> /etc/sysconfig/network-scripts/ifcfg-eth0
+          echo "GATEWAY=192.168.11.1" >> /etc/sysconfig/network-scripts/ifcfg-eth1
+          systemctl restart network
+          ip route add default via 192.168.11.1
+        SHELL
+        box.vm.provision "shell", path: "./roles/webserver/files/scripts/bootstrap.sh"
+
+      when "log"
+        box.vm.provision "shell", inline: <<-SHELL
+          echo "DEFROUTE=no" >> /etc/sysconfig/network-scripts/ifcfg-eth0
+          echo "GATEWAY=192.168.11.1" >> /etc/sysconfig/network-scripts/ifcfg-eth1
+          systemctl restart network
+          ip route add default via 192.168.11.1
+        SHELL
+
+      when "zabbix"
+        box.vm.provider "virtualbox" do |vb|
+          vb.memory = "1024"
+        end
+        box.vm.provision "shell", inline: <<-SHELL
+          echo "DEFROUTE=no" >> /etc/sysconfig/network-scripts/ifcfg-eth0
+          echo "GATEWAY=192.168.11.1" >> /etc/sysconfig/network-scripts/ifcfg-eth1
+          systemctl restart network
+          ip route add default via 192.168.11.1
+        SHELL
+
+      end
+    end
+    
+#    config.vm.provision "mysql_replication", type:'ansible' do |ansible|
+#      ansible.inventory_path = 'inventory'
+#      ansible.playbook = 'mysql.yml'
+#    end
+  end
+end

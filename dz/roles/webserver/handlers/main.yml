@@ -1,0 +1,69 @@
+---
+# handlers file for roles/webserver
+
+- name: certificate
+  shell: >
+      openssl req -x509 -nodes -newkey rsa:2048 -days 365 -keyout {{ dir_key_path }} -out {{ dir_cert_path }} -subj /C=/ST=/L=/O=/CN=project-lab.local
+
+- name: start nginx
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: restart nginx
+  systemd:
+    name: nginx
+    state: restarted
+
+- name: start php-fpm
+  systemd:
+    name: php-fpm
+    state: started
+    enabled: yes
+
+- name: restart php-fpm
+  systemd:
+    name: php-fpm
+    state: restarted
+
+- name: Unpack archive
+  unarchive:
+    src: https://ru.wordpress.org/wordpress-5.7.1-ru_RU.tar.gz
+    dest: '{{ dir_www_path }}'
+    remote_src: yes
+    extra_opts: [--strip-components=1]
+  listen: wordpress
+
+- name: Copy WordPress config file
+  template:
+    src: wp-config.php
+    dest: '{{ dir_www_path }}'
+  listen: wordpress
+
+- name: Selinux
+  shell: |
+    semanage fcontext -a -t httpd_sys_content_t "{{ dir_www_path }}(/.*)?"
+    semanage fcontext -a -t httpd_sys_script_exec_t "{{ dir_www_path }}/wp-config\.php"
+    semanage fcontext -a -t httpd_sys_rw_content_t "{{ dir_www_path }}/wp-content(/.*)?"
+    semanage fcontext -a -t httpd_sys_script_exec_t "{{ dir_www_path }}/.*\.php"
+    semanage fcontext -a -t httpd_sys_rw_content_t "{{ dir_www_path }}/wp-content/upgrade(/.*)?"
+    semanage fcontext -a -t httpd_sys_rw_content_t "{{ dir_www_path }}/wp-content/uploads(/.*)?"
+    semanage fcontext -a -t httpd_sys_script_exec_t "{{ dir_www_path }}/wp-includes/.*\.php"
+    restorecon -Rv '{{ dir_www_path }}'
+    setsebool -P httpd_can_network_connect_db 1
+  listen: wordpress
+
+- name: conf borgbackup
+  shell: |
+    ssh-keygen -b 2048 -t rsa -q -N '' -f ~/.ssh/id_rsa
+    sshpass -p password ssh-copy-id -o "StrictHostKeyChecking=no" borg@192.168.11.30
+    borg init -e none borg@192.168.11.30:/backup/dir_site/$(hostname)-www
+  listen: borgbackup
+  when: ansible_hostname == "web"
+
+- name: daemon-reload
+  shell: |
+    systemctl daemon-reload
+    systemctl enable --now borg-backup.service
+    systemctl enable --now borg-backup.timer

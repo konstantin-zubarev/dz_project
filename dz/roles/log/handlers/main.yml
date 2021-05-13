@@ -1,0 +1,13 @@
+---
+# handlers file for roles/log
+
+- name: start rsyslog
+  service:
+    name: rsyslog
+    state: started
+    enabled: yes
+
+- name: restart rsyslog
+  service:
+    name: rsyslog
+    state: restarted

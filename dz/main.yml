@@ -1,0 +1,30 @@
+---
+- hosts: inetRouter
+  gather_facts: "yes"
+  become: true
+  roles:
+    - inetRouter
+
+- hosts: web, backup
+  gather_facts: "yes"
+  become: true
+  roles:
+    - webserver
+
+- hosts: mariadb, backup
+  gather_facts: "yes"
+  become: true
+  roles:
+    - dbserver
+
+- hosts: all
+  gather_facts: "yes"
+  become: true
+  roles:
+    - log
+
+- hosts: all
+  gather_facts: "yes"
+  become: true
+  roles:
+    - zabbix

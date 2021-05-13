@@ -1,0 +1,49 @@
+---
+
+install_zabbix: 
+  - zabbix-agent
+  - zabbix-server-mysql
+  - zabbix-web-mysql
+
+php_modules:
+  - php73
+  - php-fpm
+  - php-cli
+  - php-mysqlnd
+  - php-gd
+  - php-ldap
+  - php-odbc
+  - php-pdo
+  - php-pecl-memcache
+  - php-pear
+  - php-xml
+  - php-xmlrpc
+  - php-mbstring
+  - php-snmp
+  - php-soap
+  - php-zip
+  - php-opcache
+  - php-imap
+  - php-bcmath
+
+dir_www_path: '/var/www/wordpress'
+dir_backup_path: '/backup/dir_site'
+db_backup_path: '/backup/db_site'
+ip_backup_client: '192.168.11.20'
+ip_backup_server: '192.168.11.30'
+ip_zabbix_server: '192.168.11.50'
+
+dir_cert_path: '/etc/ssl/project-lab.local.crt'
+dir_key_path: '/etc/ssl/project-lab.local.key'
+
+mysql_db_mycnf_path: /root/.my.cnf
+mysql_db_host: '192.168.11.20'
+
+mysql_db_name: 'wordpress'
+mysql_db_user: 'wordpress'
+mysql_db_user_pass: 'Pass121##212'
+mysql_db_root_pass: 'Pass121@@212'
+
+mysql_db_zabbix_name: 'zabbix'
+mysql_db_zabbix_user: 'zabbix'
+mysql_db_zabbix_user_pass: 'zabbix'

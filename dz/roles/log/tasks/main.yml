@@ -1,0 +1,14 @@
+---
+# tasks file for roles/log
+
+- name: Set timezone to Europe/Moscow
+  timezone:
+    name: Europe/Moscow
+
+- name: log_rsyslog_s
+  include_tasks: rsyslog_s.yml
+  when: ansible_hostname == "log"
+
+- name: log_rsyslog_c
+  include_tasks: rsyslog_c.yml
+  when: ansible_hostname != "log"

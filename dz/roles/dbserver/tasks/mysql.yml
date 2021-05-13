@@ -1,0 +1,25 @@
+---
+# tasks file for roles/dbserver
+
+- name: Add MariaDB repository
+  copy:
+    src: CentOS-MariaDB.repo
+    dest: /etc/yum.repos.d/
+
+- name: Install mariadb-server
+  yum:
+    name: mariadb-server
+    state: present
+  notify: start mariadb
+
+- name: Install MySQL-python
+  yum:
+    name: MySQL-python
+    state: present
+
+- name: 'Change my.cnf'
+  replace:
+    path: /etc/my.cnf.d/server.cnf
+    regexp: '#bind-address=0.0.0.0'
+    replace: 'bind-address=0.0.0.0'
+  notify: restart mariadb

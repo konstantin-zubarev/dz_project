@@ -1,0 +1,18 @@
+---
+# tasks file for roles/dbserver
+
+- name: Set timezone to Europe/Moscow
+  timezone:
+    name: Europe/Moscow
+
+- name: db_mysql
+  include_tasks: mysql.yml
+  when: ansible_hostname == "mariadb"
+
+- name: db_nfs_server
+  include_tasks: nfs_s.yml
+  when: ansible_hostname == "backup"
+
+- name: db_nfs_client
+  include_tasks: nfs_c.yml
+  when: ansible_hostname == "mariadb"

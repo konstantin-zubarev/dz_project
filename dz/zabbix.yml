@@ -1,0 +1,29 @@
+---
+
+- name: zabbix
+  hosts: zabbix
+  gather_facts: "yes"
+  become: true
+
+  tasks:
+
+    - name: Install unzip
+      yum:
+        name: unzip
+        state: present
+  
+    - name: Copy db mysql
+      copy:
+        src: zabbix.sql
+        dest: /tmp/
+
+    - name: Restore database
+      mysql_db:
+        name: "{{ mysql_db_zabbix_name }}"
+        state: import
+        target: /tmp/zabbix.sql
+
+    - name: Dir zabbix
+      unarchive:
+        src: zabbix.zip
+        dest: /var/www/

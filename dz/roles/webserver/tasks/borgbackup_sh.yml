@@ -1,0 +1,28 @@
+---
+# tasks file for roles/webserver
+
+- name: Install sshpass
+  yum:
+    name: sshpass
+    state: present
+
+- name: Copy scripts backup
+  template:
+    src: borg-backup.sh
+    dest: /etc/init.d/borg-backup.sh
+    mode: u+x
+
+- name: Copy conf backup
+  copy:
+    src: borg/{{ item.src }}
+    dest: "{{ item.dest }}"
+  with_items:
+    - { src: borg-backup, dest: /etc/logrotate.d/borg-backup }
+    - { src: borg-backup.service, dest: /etc/systemd/system/borg-backup.service }
+    - { src: borg-backup.timer, dest: /etc/systemd/system/borg-backup.timer }
+  notify: daemon-reload
+
+- name: Copy recovery
+  template:
+    src: recovery.sh
+    dest: /root/

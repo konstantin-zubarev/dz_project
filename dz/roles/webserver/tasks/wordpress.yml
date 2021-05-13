@@ -1,0 +1,14 @@
+---
+# tasks file for roles/webserver
+
+- name: Install unzip
+  yum:
+    name: unzip
+    state: present
+
+- name: Create directory
+  file:
+    path: '{{ dir_www_path }}'
+    state: directory
+  notify: wordpress
+

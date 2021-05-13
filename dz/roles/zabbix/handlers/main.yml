@@ -1,0 +1,141 @@
+---
+# handlers file for roles/zabbix
+
+- name: start nginx
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+
+- name: restart nginx
+  systemd:
+    name: nginx
+    state: restarted
+
+- name: start php-fpm
+  systemd:
+    name: php-fpm
+    state: started
+    enabled: yes
+
+- name: restart php-fpm
+  systemd:
+    name: php-fpm
+    state: restarted
+  
+- name: start mariadb
+  systemd:
+    name: mariadb
+    state: started
+    enabled: yes
+
+- name: restart mariadb
+  systemd:
+    name: mariadb
+    state: restarted
+
+- name: start zabbix-server
+  service:
+    name: zabbix-server
+    state: started
+    enabled: yes
+
+- name: restart zabbix-server
+  service:
+    name: zabbix-server
+    state: restarted
+
+- name: start zabbix-agent
+  service: 
+    name: zabbix-agent
+    state: started
+    enabled: yes
+
+- name: restart zabbix-agent
+  service: 
+    name: zabbix-agent
+    state: restarted
+
+- name: mysql_secure_installation
+  shell: echo -e "\ny\n"{{ mysql_db_root_pass }}"\n"{{ mysql_db_root_pass }}"\ny\ny\ny\ny" | /usr/bin/mysql_secure_installation
+  listen: start mariadb
+
+- name: Copy root my.cnf file
+  template:
+    src: my.cnf.j2
+    dest: "{{ mysql_db_mycnf_path }}"
+    owner: root
+    group: root
+    mode: '0600'
+  listen: start mariadb
+
+- name: Create mysql database
+  mysql_db:
+    name: "{{ mysql_db_zabbix_name }}"
+    encoding: utf8
+    collation: utf8_bin
+  listen: start mariadb
+
+- name: Create mysql user
+  mysql_user:
+    name: "{{ mysql_db_zabbix_user }}"
+    password: "{{ mysql_db_zabbix_user_pass }}"
+    host: "localhost"
+    priv: "*.*:All"
+    state: present
+  listen: start mariadb
+
+- name: database
+  shell:
+    cmd: zcat /usr/share/doc/zabbix-server-mysql-4.4.10/create.sql.gz | mysql -uzabbix -pzabbix zabbix
+  notify:
+    - restart zabbix-server
+    - restart zabbix-agent
+    - restart php-fpm
+    - restart nginx
+    - chown
+
+- name: chown
+  shell: |
+    chown -R nginx:nginx /var/lib/php/session
+    chown -R nginx:nginx /etc/zabbix/web
+
+- name: create SE module my-zabbix.pp
+  shell: |
+    cat /var/log/audit/audit.log  | grep zabbix | audit2allow -M my-zabbix
+  listen: selinux1
+
+- name: load SE module my-zabbix.pp
+  shell: |
+    semodule -i my-zabbix.pp
+  listen: selinux1
+
+- name: create SE module zabbix_server
+  shell: |
+    cat /var/log/audit/audit.log  | grep zabbix_server | audit2allow -M zabbix_server
+  listen: selinux
+
+- name: load SE module zabbix_server
+  shell: |
+    semodule -i zabbix_server.pp
+  listen: selinux
+
+- name: load SE module zabbix_server_add
+  shell: |
+    curl https://support.zabbix.com/secure/attachment/53320/zabbix_server_add.te > zabbix_server_add.te
+    checkmodule -M -m -o zabbix_server_add.mod zabbix_server_add.te
+    semodule_package -m zabbix_server_add.mod -o zabbix_server_add.pp
+    semodule -i zabbix_server_add.pp
+    systemctl restart zabbix-server
+    setsebool -P httpd_can_connect_zabbix on
+  listen: selinux
+
+- name: create SE module 
+  shell: |
+    cat /var/log/audit/audit.log  | grep php-fpm | audit2allow -M php-fpm
+  listen: selinux1
+
+- name: load SE module 
+  shell: |
+    semodule -i php-fpm.pp
+  listen: selinux1

@@ -1,0 +1,37 @@
+---
+# tasks file for roles/dbserver
+
+- name: Install nfs-server
+  yum:
+    name: nfs-utils
+    state: present
+  notify: start rpcbind
+
+- name: Create directory
+  file:
+    path: "{{ db_backup_path }}"
+    state: directory
+
+- name: Copy backup-db_site.mount
+  template:
+    src: backup-db_site.mount
+    dest: /etc/systemd/system/backup-db_site.mount
+  notify: start backup-db_site.mount
+
+- name: Copy conf backup_db
+  template:
+    src: database_backup.sh
+    dest: /etc/init.d/database_backup.sh
+    mode: u+x
+
+- name: Copy conf backup_service
+  copy:
+    src: "{{ item }}"
+    dest: /etc/systemd/system/
+  with_items: [db-backup.service, db-backup.timer]
+  notify: daemon-reload
+
+- name: Copy recovery
+  template:
+    src: recover_db_wordpres.sh
+    dest: /root/

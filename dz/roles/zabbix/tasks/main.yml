@@ -1,0 +1,26 @@
+---
+# tasks file for roles/zabbix
+
+- name: Set timezone to Europe/Moscow
+  timezone:
+    name: Europe/Moscow
+
+- name: zabbix_nginx
+  include_tasks: nginx.yml
+  when: ansible_hostname == "zabbix"
+
+- name: zabbix_php-fpm
+  include_tasks: php-fpm.yml
+  when: ansible_hostname == "zabbix"
+
+- name: zabbix_mysql
+  include_tasks: mysql.yml
+  when: ansible_hostname == "zabbix"
+
+- name: zabbix_zabbix_s
+  include_tasks: zabbix_s.yml
+  when: ansible_hostname == "zabbix"
+
+- name: zabbix_zabbix_c
+  include_tasks: zabbix_c.yml
+  when: ansible_hostname != "zabbix"

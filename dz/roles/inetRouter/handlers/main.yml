@@ -1,0 +1,7 @@
+---
+# handlers file for roles/inetRouter
+
+- name: restart iptables
+  systemd:
+    name: iptables
+    state: restarted

@@ -1,0 +1,14 @@
+---
+# tasks file for roles/log
+
+- name: Check rsyslog 
+  yum: 
+    name: rsyslog
+    state: present
+  notify: start rsyslog
+
+- name: Copy rsyslog config
+  copy:
+    src: rsyslog_c.conf
+    dest: /etc/rsyslog.conf
+  notify: restart rsyslog

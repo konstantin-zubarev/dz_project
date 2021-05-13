@@ -1,0 +1,18 @@
+---
+# tasks file for roles/zabbix
+
+- name: Add MariaDB repository
+  copy:
+    src: CentOS-MariaDB.repo
+    dest: /etc/yum.repos.d/
+
+- name: Install mariadb-server
+  yum:
+    name: mariadb-server
+    state: present
+  notify: start mariadb
+
+- name: Install MySQL-python
+  yum:
+    name: MySQL-python
+    state: present

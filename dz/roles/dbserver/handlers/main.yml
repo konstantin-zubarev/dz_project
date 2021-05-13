@@ -1,0 +1,85 @@
+---
+# handlers file for roles/dbserver
+
+- name: start mariadb
+  systemd:
+    name: mariadb
+    state: started
+    enabled: yes
+
+- name: restart mariadb
+  systemd:
+    name: mariadb
+    state: restarted
+
+- name: start rpcbind
+  systemd:
+    name: rpcbind
+    state: started
+    enabled: yes
+  listen: nfs
+
+- name: restart rpcbind
+  systemd:
+    name: rpcbind
+    state: restarted
+
+- name: start nfs-server
+  systemd:
+    name: nfs-server
+    state: started
+    enabled: yes
+  listen: nfs
+
+- name: restart nfs-server
+  systemd:
+    name: nfs-server
+    state: restarted
+
+- name: mysql_secure_installation
+  shell: echo -e "\ny\n"{{ mysql_db_root_pass }}"\n"{{ mysql_db_root_pass }}"\ny\ny\ny\ny" | /usr/bin/mysql_secure_installation
+  listen: start mariadb
+
+- name: Copy root my.cnf file
+  template:
+    src: my.cnf.j2
+    dest: "{{ mysql_db_mycnf_path }}"
+    owner: root
+    group: root
+    mode: '0600'
+  listen: start mariadb
+
+- name: Create mysql database
+  mysql_db:
+    name: "{{ mysql_db_name }}"
+    encoding: utf8
+    collation: utf8_bin
+  listen: start mariadb
+
+- name: Create mysql user
+  mysql_user:
+    name: "{{ mysql_db_user }}"
+    password: "{{ mysql_db_user_pass }}"
+    host: "%"
+    priv: "*.*:ALL"
+    state: present
+  listen: start mariadb
+
+- name: daemon-reload
+  shell: |
+    systemctl daemon-reload
+    systemctl enable --now db-backup.service
+    systemctl enable --now db-backup.timer
+
+- name: rpcbind
+  shell: |
+    chown -R  nfsnobody:nfsnobody {{ db_backup_path }}
+    echo "{{ db_backup_path }} {{ ip_backup_client }}(rw,root_squash,all_squash)" > /etc/exports
+    systemctl daemon-reload
+    systemctl restart rpcbind nfs-server
+  listen: nfs
+
+- name: start backup-db_site.mount
+  shell: |
+    systemctl start backup-db_site.mount
+    systemctl enable backup-db_site.mount

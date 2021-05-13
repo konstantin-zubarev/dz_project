@@ -1,0 +1,13 @@
+---
+# tasks file for roles/zabbix
+
+- name: Add Nginx repository
+  copy:
+    src: CentOS-Nginx.repo
+    dest: /etc/yum.repos.d/
+
+- name: Install Nginx
+  yum:
+    name: nginx
+    state: present
+  notify: start nginx

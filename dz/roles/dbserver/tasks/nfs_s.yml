@@ -1,0 +1,13 @@
+---
+# tasks file for roles/dbserver
+
+- name: Install nfs-server
+  yum:
+    name: nfs-utils
+    state: present
+
+- name: Copy nfs.conf
+  copy:
+    src: nfs.conf
+    dest: /etc/nfs.conf
+  notify: nfs

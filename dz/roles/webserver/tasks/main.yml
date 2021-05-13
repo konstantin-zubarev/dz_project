@@ -1,0 +1,25 @@
+---
+# tasks file for roles/webserver
+
+- name: Set timezone to Europe/Moscow
+  timezone:
+    name: Europe/Moscow
+
+- name: web_nginx
+  include_tasks: nginx.yml
+  when: ansible_hostname == "web"
+
+- name: web_php-fpm
+  include_tasks: php-fpm.yml
+  when: ansible_hostname == "web"
+
+- name: web_wordpress
+  include_tasks: wordpress.yml
+  when: ansible_hostname == "web"
+
+- name: db_borgbackup
+  include_tasks: borgbackup.yml
+
+- name: db_borgbackup_sh
+  include_tasks: borgbackup_sh.yml
+  when: ansible_hostname == "web"

@@ -1,0 +1,11 @@
+[Unit]
+Description = Mount NFS Share
+
+[Mount]
+What = {{ ip_backup_server }}:{{ db_backup_path }}
+Where = {{ db_backup_path }}
+Type = nfs
+Options = defaults
+
+[Install]
+WantedBy = multi-user.target
