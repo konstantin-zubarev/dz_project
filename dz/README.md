@@ -100,6 +100,7 @@ zabbix
 ![](creenshots/zabbix4.jpeg)
 
 На открывшейся странице на вкладке «Action (Действия)» заполняем следующие поля
+
 ![](creenshots/zabbix-5.jpeg)
 
 Здесь
