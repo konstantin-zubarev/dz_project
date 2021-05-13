@@ -102,7 +102,9 @@ zabbix
 На открывшейся странице на вкладке «Action (Действия)» заполняем следующие поля
 
 ![](topology.jpeg)
+
 ![](screenshots/5.png)
+
 ![](zabbix-5.jpeg)
 
 Здесь
