@@ -101,7 +101,9 @@ zabbix
 
 На открывшейся странице на вкладке «Action (Действия)» заполняем следующие поля
 
-![](./creenshots/zabbix-5.jpeg)
+![](topology.jpeg)
+![](screenshots/5.png)
+![](zabbix-5.jpeg)
 
 Здесь
 Name (Имя) — любое название действия
