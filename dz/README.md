@@ -65,6 +65,7 @@ web
 ![](screenshots/wordpress-1.png)
 
 
+
 ![](screenshots/wordpress-2.jpeg)
 
 mariadb
