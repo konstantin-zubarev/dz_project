@@ -57,7 +57,7 @@ web
 
 В браузере переходим по адрессу (https://project-lab.local), после необходимо сконфигурировать вручную в веб проект (логин: Admin, пароль: zabbix).
 
-![](screenshots/wordpress1.jpeg)
+![](./screenshots/wordpress1.jpeg)
 
 mariadb
 -------
