@@ -98,9 +98,11 @@ zabbix
 
 Сконфигурируем `zabbix` и настроим zabbix сервер, авторегистрация агентов.
 
+Password (zabbix)
+
 
 ![](screenshots/zabbix-1.png)
-Password (zabbix)
+
 
 
 ![](screenshots/zabbix-2.png)
