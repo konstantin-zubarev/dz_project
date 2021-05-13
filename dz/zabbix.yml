@@ -14,7 +14,7 @@
   
     - name: Copy db mysql
       copy:
-        src: zabbix.sql
+        src: roles/zabbix/files/zabbix.sql
         dest: /tmp/
 
     - name: Restore database
@@ -25,5 +25,5 @@
 
     - name: Dir zabbix
       unarchive:
-        src: zabbix.zip
-        dest: /var/www/
+        src: roles/zabbix/files/zabbix.zip
+        dest: /usr/share
